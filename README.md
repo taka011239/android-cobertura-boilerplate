@@ -34,3 +34,7 @@ There are some targets prepared for ant un HelloWorldTest/build.xml:
 # Special Mentions
 
   * Verónica Rodriguez Hermida: For helping me testing coverage alternatives.
+
+# Disclaimer
+
+YAAL is provided as it is and with NO support. Any improvement depends on my free time.
