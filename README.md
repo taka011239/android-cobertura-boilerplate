@@ -30,3 +30,7 @@ There are some targets prepared for ant un HelloWorldTest/build.xml:
     * Execute JUnit and Cobertura
     * Generate HTML reports for both JUnit and Cobertura under HelloWorldTest/cobertura-results
     * Generate XML reports under HelloWorldTest/cobertura-results/junit-reports
+
+# Special Mentions
+
+  * Verónica Rodriguez Hermida: For helping me testing coverage alternatives.
