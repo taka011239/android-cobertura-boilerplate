@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="EnjoyMobileUnitTests" default="cobertura"
+	basedir=".">
+
+	<!-- Properties -->
+
+	<property name="android.project.path" value="../HelloWorld" />
+	<property name="test.source.dir" value="./src" />
+	<property name="test.build.dir" value="./build" />
+	<property name="test.libs.dir" value="./lib" />
+	<property name="android.project.classpath" value="${android.project.path}/bin/classes" />
+	<property name="android.project.libs" value="${android.project.path}/libs" />
+	<property name="android.project.res" value="${android.project.path}/bin/res" />
+
+	<!-- Cobertura -->
+	<property name="cobertura.path" value="cobertura-results" />
+	<property name="instrumented.path" value="./instrumented" />
+
+	<!-- Filelist & Paths -->
+
+	<filelist id="libs_jars" dir="${test.libs.dir}">
+		<file name="junit-4.11.jar" />
+		<file name="mockito-all-1.9.5.jar" />
+		<file name="robolectric-2.2-jar-with-dependencies.jar" />
+		<file name="hamcrest-core-1.3.jar" />
+	</filelist>
+
+	<filelist id="android_jars" dir="${test.libs.dir}">
+		<file name="android.jar" />
+		<file name="maps.jar" />
+	</filelist>
+
+	<filelist id="enjoy_mobile_jars" dir="${android.project.libs}">
+		<file name="enjoylib.jar" />
+		<file name="libmediaplayer.jar" />
+	</filelist>
+	
+	<path id="compile_classpath">
+        <filelist refid="libs_jars" />
+        <filelist refid="android_jars" />
+        <filelist refid="enjoy_mobile_jars" />
+        <pathelement path="${android.project.classpath}" />
+    </path>
+
+	<path id="cobertura_classpath">
+		<filelist refid="libs_jars" />
+		<filelist refid="android_jars" />
+		<filelist refid="enjoy_mobile_jars" />
+	</path>
+
+	<!-- Targets -->
+	
+	<target name="clean" description="Clean Up">
+        <delete dir="${test.build.dir}" />
+        <delete file="${basedir}/tmp/cached-robolectric-classes.jar" />
+        <delete dir="${cobertura.path}" />
+        <delete dir="${basedir}/bin" />
+        <delete file="${basedir}/cobertura.ser" />
+        <delete dir="${instrumented.path}" />
+    </target>
+
+	<target name="-init" description="Prepare sources for compiling">
+		<!-- Create the time stamp -->
+		<tstamp />
+		<mkdir dir="${test.build.dir}" />
+		<copy file="${test.source.dir}/org.robolectric.Config.properties"
+			todir="${test.build.dir}" />
+	</target>
+	
+	<target name="-compile-source-project" description="Compile source project calling Android build.xml">
+		<ant antfile="${android.project.path}/build.xml" dir="${android.project.path}"
+			target="debug" />
+	</target>
+
+	<target name="compile" depends="-compile-source-project, clean, -init"
+			description="Compile test source">
+		<javac srcdir="${test.source.dir}" destdir="${test.build.dir}"
+			debug="true" debuglevel="vars,lines,source">
+			<classpath refid="compile_classpath" />
+		</javac>
+	</target>
+
+	<target name="cobertura" depends="compile" description="Code coverage">
+	    
+	    <!-- Configuration -->
+		<path id="cobertura.classpath" >
+			<fileset dir="cobertura">
+				<include name="cobertura-2.0.3.jar" />
+				<include name="lib/**/*.jar" />
+			</fileset>
+		</path>
+
+		<taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
+
+		<!-- Instrumentation -->
+		<cobertura-instrument todir="${instrumented.path}">
+			<ignore regex="org.apache.log4j.*" />
+			<fileset dir="${android.project.classpath}">
+				<include name="**/*.class" />
+				<include name="**/*\$1*.class" />
+				<exclude name="**/R$*.class" />
+				<exclude name="**/R.class" />
+				<exclude name="**/BuildConfig.class" />
+			</fileset>
+		</cobertura-instrument>
+
+		<copy todir="${instrumented.path}/res">
+			<fileset dir="${android.project.res}">
+				<include name="**/*" />
+			</fileset>
+		</copy>
+
+		<!-- Testing -->
+		<mkdir dir="${cobertura.path}/test-report" />
+		<junit fork="yes" forkMode="once" haltonfailure="no">
+			<sysproperty key="net.sourceforge.cobertura.datafile" file="cobertura.ser" />
+			<formatter type="xml" />
+			<classpath>
+				<pathelement location="${instrumented.path}" />
+				<pathelement location="${android.project.classpath}" />
+				<pathelement location="${test.build.dir}" />
+				<path refid="cobertura.classpath" />
+				<path refid="cobertura_classpath" />
+			</classpath>
+			<batchtest todir="${cobertura.path}/test-report">
+				<fileset dir="${test.source.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+	<target name="report" depends="cobertura" description="Generate HTML reports for Coverage and JUnit">
+	    <!-- Reporting -->
+		<junitreport todir="${cobertura.path}/test-report">
+			<fileset dir="${cobertura.path}/test-report" includes="TEST-*.xml" />
+			<report format="frames" todir="${cobertura.path}/test-report-html" />
+		</junitreport>
+
+		<cobertura-report format="html" destdir="${cobertura.path}/coverage-report-html" >
+			<fileset dir="${android.project.path}/src">
+		        <include name="**/*.java" />
+		    </fileset>
+		</cobertura-report>
+
+		<cobertura-report format="xml" destdir="${cobertura.path}/coverage-report-xml" >
+			<fileset dir="${android.project.path}/src">
+		        <include name="**/*.java" />
+		    </fileset>
+		</cobertura-report>
+
+		<!-- Finishing -->
+		<delete failonerror="false">
+			<fileset dir="${cobertura.path}/test-report" includes="TESTS-*.xml"/>
+		</delete>
+	</target>
+</project>
