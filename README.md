@@ -1,4 +1,4 @@
-# android-cobertura-skeleton
+# android-cobertura-boilerplate
 
 This is an Android skeleton project configured with:
 
